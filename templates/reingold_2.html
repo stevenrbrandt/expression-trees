@@ -143,28 +143,27 @@ Katy worked on 3/1
 <script>
 // Set the dimensions and margins of the diagram
 var margin = {top: 20, right: 90, bottom: 30, left: 90},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    width = 860 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
 
 /* http://bl.ocks.org/davegotz/bd54b56723c154d25eedde6504d30ad7 */
 var tool_tip = d3.tip()
       .attr("class", "d3-tip")
       .offset([-8, 0])
       .html(function(d){ //katy
-          var formatTime = d3.format(".9f");
           if (d.id === 1) {
               return "<p>Function: " + d.data.name + "</p>";
           }
           if (d._perfdata.count > 0) {
-              return "<p>Primitive instance: " + d.data.name.substring(9) + "</p>"+
+              return "<p>Primitive instance: " + d._perfdata.display_name + "</p>"+
                     "<p>Count: " + d._perfdata.count + "</p>" +
                     "<p>Average time: " + prettyprintTime(d._perfdata.avg_time) + " </p>";
           } else if (d._perfdata.direct_count > 0) {
-              return "<p>Primitive instance: " + d.data.name.substring(9) + "</p>" +
+              return "<p>Primitive instance: " + d._perfdata.display_name + "</p>" +
                     "<p>Direct count: " + d._perfdata.direct_count + "</p>" +
                     "<p>Average direct time: " + prettyprintTime(d._perfdata.avg_direct_time) + " </p>";
           } else {
-              return "<p>Primitive instance: " + d.data.name.substring(9) + "</p>";
+              return "<p>Primitive instance: " + d._perfdata.display_name + "</p>";
           }
         });
 
@@ -180,13 +179,13 @@ var svg = d3.select("body").append("svg")
 svg.call(tool_tip);
 
 // declares a tree layout and assigns the size
-var treemap = d3.tree().size([height, width]);
+var treemap = d3.tree().size([(height-margin.bottom), width]);
 
 var treemat = [1];
 
 d3.queue()
-        .defer(d3.text, "kate_output_slack.txt")
-        .defer(d3.csv, "breast_cancer_prim_perf_counter_data.csv")
+        .defer(d3.text, "20180324_treeformat.txt")
+        .defer(d3.csv, "20180324_perfdata.csv")
         .await(analyze);
 
 function analyze(error, treeformat, perfdata) {
@@ -204,14 +203,15 @@ function analyze(error, treeformat, perfdata) {
     perfdata.map(function(d){
         var avgTime = ((+d.time) + (+d.direct_time))/(d.count + d.direct_count);
         if (avgTime > 0) {
-            domainTimes.push(avgTime * 1.e-9);
+            domainTimes.push(avgTime); //katy check times * 1.e-9);
         }
         
         prim_inst.push(d.primitive_instance);
     });
+    console.log(d3.extent(domainTimes));
     var colors = ["#edf8fb", "#b2e2e2", "#66c2a4", "#2ca25f", "#006d2c"];
     colorTimeScale = d3.scaleQuantize() //went with log scale
-                .domain([0,65]) //katy d3.extent(domainTimes)
+                .domain(d3.extent(domainTimes))
                 .range(colors);
     //gotta get the domain values for each color
     domainVals = [colorTimeScale.invertExtent(colors[0])[0]];
@@ -220,9 +220,9 @@ function analyze(error, treeformat, perfdata) {
         domainVals.push(colorTimeScale.invertExtent(colors[i])[1]);
     }
       // ****************** Slider section **************************
-threshold =  65;
+threshold =  0;
 slider_x = d3.scaleLinear()
-             .domain([0, 65]) //katy greatestVal
+             .domain(d3.extent(domainTimes)) //katy greatestVal
              .range([0, 500])
              .clamp(true);
 slider = svg.append("g")
@@ -251,7 +251,8 @@ slider.insert("g", ".track-overlay")
      .enter().append("text")
      .attr("x", slider_x)
      .attr("text-anchor", "middle")
-     .text(function(d) { return d + "s"; });
+     .text(function(d) { return prettyprintTime(d); });
+     
 handle = slider.insert("circle", ".track-overlay")
          .attr("class", "handle")
          .attr("r", 9);
@@ -367,9 +368,9 @@ function update(source, perfdata, threshold) {
           // Change time to time-per-instance //katy
           if (prim_inst.indexOf(nodename) >= 0) {
             node_perfdata = perfdata[prim_inst.indexOf(nodename)];    
-            node_perfdata.avg_time = i; // (node_perfdata.time / node_perfdata.count) * 1.e-9; //katy nanos are SMALL
+            node_perfdata.avg_time = (node_perfdata.time / node_perfdata.count); // * 1.e-9; //katy nanos are SMALL
             if (!node_perfdata.avg_time) node_perfdata.avg_time = 0;
-            node_perfdata.avg_direct_time = 0; //(node_perfdata.direct_time / node_perfdata.direct_count) * 1.e-9;
+            node_perfdata.avg_direct_time = (node_perfdata.direct_time / node_perfdata.direct_count); // * 1.e-9;
             if (!node_perfdata.avg_direct_time) node_perfdata.avg_direct_time = 0;
             d._perfdata = perfdata[prim_inst.indexOf(nodename)];  
           }
@@ -378,7 +379,7 @@ function update(source, perfdata, threshold) {
  
  node.each(function(d){
      if (d._perfdata) {
-         if (d._perfdata.avg_time >= threshold) { //katy
+         if ((d._perfdata.avg_time < threshold) && (d.children)) { //katy
               if (d.children) {
                 d._children = d.children;
                 d.children = null;
@@ -387,7 +388,7 @@ function update(source, perfdata, threshold) {
                 d._children = null;
               }
          }
-         if (d._perfdata.avg_direct_time >= threshold) { //katy
+         if ((d._perfdata.avg_direct_time < threshold) && (d.children)) { //katy
               if (d.children) {
                 d._children = d.children;
                 d.children = null;
@@ -465,7 +466,7 @@ function update(source, perfdata, threshold) {
       })
       .text(function(d) { 
           if (!d.children) {
-            return d.data.name.substring(9); 
+            return d._perfdata.display_name; 
           } else {
               return "";
           }
@@ -580,24 +581,26 @@ function update(source, perfdata, threshold) {
 
 
 function prettyprintTime(time) {
-    var exp = -Math.floor( Math.log(time) / Math.log(10));
-  
+    //converting nanoseconds to nice-looking times
+    timeInSeconds = time * 1e-9;
+    var exp = -Math.floor( Math.log(timeInSeconds) / Math.log(10))+1;
+
     if (exp == 0) { //second
-        return (time).toFixed(4) + " s";
+        return (timeInSeconds).toFixed(4) + " s";
     }
-    else if ((exp > 0) && (exp <= 3)) {
-        return (time * 1000).toFixed(4) + " ms"; //millisecond
+    else if ((exp > 0) && (exp <= 4)) {
+        return (timeInSeconds * 1000).toFixed(4) + " ms"; //millisecond
     } 
-    else if ((exp > 3) && (exp <= 6)) {
-        return (time * 1000000).toFixed(4)  + " us"; //microsecond
+    else if ((exp > 4) && (exp <= 7)) {
+        return (timeInSeconds * 1000000).toFixed(4)  + " us"; //microsecond
     }
-    else if ((exp > 6) && (exp <= 9)){
-        return (time * 1000000000).toFixed(4)  + " ns"; //nanosecond
+    else if ((exp > 7) && (exp <= 10)){
+        return (timeInSeconds * 1000000000).toFixed(4)  + " ns"; //nanosecond
     }
-    else if ((exp > 9) && (exp <= 12)) {
-        return (time * 1000000000000).toFixed(4)  + " ps"; //picosecond
+    else if ((exp > 10) && (exp <= 13)) {
+        return (timeInSeconds * 1000000000000).toFixed(4)  + " ps"; //picosecond
     }
-    return time + " s";
+    return timeInSeconds + " s";
     
 }
 </script>
