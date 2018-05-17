@@ -3,7 +3,7 @@
 Katy worked on 3/1
 -->
 <head>
-<title>Slider Reingold-Tilford Tree</title>
+<title>Reingold-Tilford Tree</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="shortcut icon" href="#"/>
@@ -99,7 +99,7 @@ Katy worked on 3/1
 }
     
     
-#shapekey {
+#key {
     position: absolute;
     text-align: left;
     padding: 2px;
@@ -110,47 +110,28 @@ Katy worked on 3/1
     display: inline-block;
     white-space: nowrap;
 }
-#navigate {
-    display: inline-block;
-    background: lightsteelblue;
-    padding: 2px;
-    border-radius: 8px
-}
 
 #legend {
-    width: 300px;
-    height: 100px;
-    /*position: absolute;*/
-    display: inline-block;
+    width: 150px;
+    height: 150px;
+    position: absolute;
 }
 
-.node-line-key {
-    height: 10px;
-    width: 20px;
-}
-.node-shape-key {
-    height: 10px;
-    width: 20px;
-}
 </style>
 </head>
 <body>
-    <div id="navigate">
-        <p>Navigation</p>
-            <p>Slider d3 Reingold-Tilford Tree (<a href="http://bl.ocks.org/d3noob/8375092">original</a>)
-            <p><a href="reingold_tilford.html">d3 Reingold-Tilford Tree</a> (<a href="http://bl.ocks.org/d3noob/8375092">original</a>)
+    <div><p>d3 Reingold-Tilford Tree (<a href="http://bl.ocks.org/d3noob/8375092">original</a>)
             <p><a href="rectangles.html">Rectangles tree</a> (<a href="https://bl.ocks.org/mbostock/1093025#index.html">original</a>)</p>
             <p><a href="icicle.html">Icicle tree</a> (<a href="https://bl.ocks.org/tophtucker/a35c0f4f32400755a6a9b976be834ab3">original</a>)</p>
     </div>
-    <div id="shapekey">
-        <p>Node key</p>
-        <p><svg class="node-shape-key"></svg> node has children</p>
-        <p><svg class="node-shape-key"></svg> circles node has no children </p>
-        <p><svg class="node-line-key"><path d="M 2 5 L 18 5" stroke-dasharray = "3,3" stroke="black"/></svg> dashed synchronous (direct)</p>
-        <p><svg class="node-line-key"><path d="M 2 5 L 18 5" stroke="black"/></svg> solid: asynchronous (normal)</p>
+    
+    <div id="key">
+        <p> triangles have children, circles no children </p>
+        <p> dashed: synchronous (direct)</p>
+        <p> solid: asynchronous (normal)</p>
+
     </div>
-    <div id="legend"></div>
-    <div id="vis"></div>
+    
 <!-- Copyright 2011 Jason Davies https://github.com/jasondavies/newick.js -->
 <script>function parseNewick(a){for(var e=[],r={},s=a.split(/\s*(;|\(|\)|,|:)\s*/),t=0;t<s.length;t++){var n=s[t];switch(n){case"(":var c={};r.branchset=[c],e.push(r),r=c;break;case",":var c={};e[e.length-1].branchset.push(c),r=c;break;case")":r=e.pop();break;case":":break;default:var h=s[t-1];")"==h||"("==h||","==h?r.name=n:":"==h&&(r.length=parseFloat(n))}}return r}</script>
 
@@ -160,24 +141,6 @@ Katy worked on 3/1
 
 <!-- https://bl.ocks.org/d3noob/43a860bc0024792f8803bba8ca0d5ecd -->
 <script>
-    var symbol = d3.symbol().size([150]);
-    
-//    d3.selectAll(".node-shape-key").insert("g")
-//            .selectAll("path").data([0]).enter()
-//            .append("path")
-//            .attr("d", symbol.type(function(d) {
-//                console.log(d);
-//                if (d === 0) {
-//                    return d3.symbolTriangle;
-//                } else {
-//                    return d3.symbolCircle;
-//                }
-//            }))
-//            .attr("transform", "rotate(-90)")
-//            .attr("transform", "translate(10,13)")
-//            .style("stroke", "black")
-//            .style("fill", "magenta");
-    
 // Set the dimensions and margins of the diagram
 var margin = {top: 20, right: 90, bottom: 30, left: 90},
     width = 860 - margin.left - margin.right,
@@ -188,29 +151,23 @@ var tool_tip = d3.tip()
       .attr("class", "d3-tip")
       .offset([-8, 0])
       .html(function(d){ //katy
-      
           if (d.id === 1) {
               return "<p>Function: " + d.data.name + "</p>";
           }
-          if (d._perfdata.eval_direct === 0) {
+          if (d._perfdata.count > 0) {
               return "<p>Primitive instance: " + d._perfdata.display_name + "</p>"+
                     "<p>Count: " + d._perfdata.count + "</p>" +
-                    "<p>Average async time: " + prettyprintTime(d._perfdata.avg_time) + " </p>";
-          } else if (d._perfdata.eval_direct === 1) {
+                    "<p>Average time: " + prettyprintTime(d._perfdata.avg_time) + " </p>";
+          } else if (d._perfdata.direct_count > 0) {
               return "<p>Primitive instance: " + d._perfdata.display_name + "</p>" +
-                    "<p>Count: " + d._perfdata.count + "</p>" +
-                    "<p>Average direct time: " + prettyprintTime(d._perfdata.avg_time) + " </p>";
-          } else if (d._perfdata.eval_direct === -1) {
-              return "<p>Primitive instance: " + d._perfdata.display_name + "</p>" +
-                    "<p>Count: " + d._perfdata.count + "</p>" +
-                    "<p>Average time: " + prettyprintTime(d._perfdata.avg_time) + " </p>" +
-                    "<p>Evaluation style (sync or async) determined at runtime.</p>"; 
+                    "<p>Direct count: " + d._perfdata.direct_count + "</p>" +
+                    "<p>Average direct time: " + prettyprintTime(d._perfdata.avg_direct_time) + " </p>";
           } else {
               return "<p>Primitive instance: " + d._perfdata.display_name + "</p>";
           }
         });
 
-var svg = d3.select("#vis").append("svg")
+var svg = d3.select("body").append("svg")
     .attr("width", width + margin.right + margin.left)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
@@ -227,8 +184,8 @@ var treemap = d3.tree().size([(height-margin.bottom), width]);
 var treemat = [1];
 
 d3.queue()
-        .defer(d3.text, "20180406_flag_tree.txt")
-        .defer(d3.csv, "20180406_flag_perfdata.csv")
+        .defer(d3.text, "20180324_treeformat.txt")
+        .defer(d3.csv, "20180324_perfdata.csv")
         .await(analyze);
 
 function analyze(error, treeformat, perfdata) {
@@ -244,16 +201,15 @@ function analyze(error, treeformat, perfdata) {
     domainTimes = [];
     prim_inst = [];
     perfdata.map(function(d){
-        var avgTime = (+d.time)/(+d.count);
+        var avgTime = ((+d.time) + (+d.direct_time))/(d.count + d.direct_count);
         if (avgTime > 0) {
             domainTimes.push(avgTime); //katy check times * 1.e-9);
         }
+        
         prim_inst.push(d.primitive_instance);
     });
-    //console.log(d3.extent(domainTimes));
-
-    var colors = ["#edf8fb", "#b2e2e2", "#66c2a4", "#2ca25f", "#006d2c"]; //green
-    //var colors = ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"];  //blue
+    console.log(d3.extent(domainTimes));
+    var colors = ["#edf8fb", "#b2e2e2", "#66c2a4", "#2ca25f", "#006d2c"];
     colorTimeScale = d3.scaleQuantize() //went with log scale
                 .domain(d3.extent(domainTimes))
                 .range(colors);
@@ -263,7 +219,6 @@ function analyze(error, treeformat, perfdata) {
     for (var i=0; i<colors.length; i++){
         domainVals.push(colorTimeScale.invertExtent(colors[i])[1]);
     }
-    
       // ****************** Slider section **************************
 threshold =  0;
 slider_x = d3.scaleLinear()
@@ -288,18 +243,6 @@ slider.append("line")
              update(root, perfdata, slider_x.invert(d3.event.x));
      }));
      
-     
-sliderText = slider.insert("g")
-        .attr("class", "slider-val")
-        .attr("transform", "translate(550, "+(4)+")")
-        .selectAll("text")
-        .data([0]).enter()
-        .append("text")
-        .attr("font-family", "sans-serif")
-        .attr("x", 0)
-        .attr("text-anchor", "middle")
-        .text("0");
-
 slider.insert("g", ".track-overlay")
      .attr("class", "ticks")
      .attr("transform", "translate(0," + 18 + ")")
@@ -339,25 +282,24 @@ function addLegend(domainVals, greatestVal, colors) {
 
     var x = d3.scaleLinear()
         .domain([0, greatestVal])
-        .range([0, 300]);
+        .range([0, 200]);
 
     var xAxis = d3.axisBottom(x)
         .tickSize(13)
-        .tickValues(domainVals)
-        .tickFormat(function(d) { return prettyprintTime(d); }); // === 0.5 ? formatPercent(d) : formatNumber(100 * d); });
+        .tickValues(domainVals);
+        //.tickFormat(function(d) { return d === 0.5 ? formatPercent(d) : formatNumber(100 * d); });
 
-   
-    var g = d3.select("#legend").append("svg")
-        .attr("width", 600 + margin.right + margin.left)
-        .attr("height", 45 + margin.bottom)
+    var g = d3.select("#key").append("svg")
+        .attr("width", 50 + margin.right + margin.left)
+        .attr("height", 15 + margin.bottom)
       .append("g")
-        .attr("transform", "translate(250,50)")
+        .attr("transform", "translate(16,17)")
               //+ margin.left + "," + margin.top + ")")
               .call(xAxis);
 
     g.select(".domain")
         .remove();
-    
+
     g.selectAll("rect")
       .data(colorTimeScale.range().map(function(color) {
         var d = colorTimeScale.invertExtent(color);
@@ -377,7 +319,6 @@ function addLegend(domainVals, greatestVal, colors) {
         .attr("text-anchor", "start")
         .attr("y", -6)
         .text("Average time per instance");   
-    
 }
 
 // Count the number of nodes at each level
@@ -398,9 +339,6 @@ function countNodes(node) {
 function update(source, perfdata, threshold) {
   
   handle.attr("cx", slider_x(threshold));
-  sliderText.text(prettyprintTime(threshold))
-          .attr("font-family", "sans-serif")
-          .attr("font-size", "15px");
   // Assigns the x and y position for the nodes
   var tree = treemap(root);
 
@@ -430,41 +368,38 @@ function update(source, perfdata, threshold) {
           // Change time to time-per-instance //katy
           if (prim_inst.indexOf(nodename) >= 0) {
             node_perfdata = perfdata[prim_inst.indexOf(nodename)];    
-            node_perfdata.eval_direct = +node_perfdata.eval_direct;
             node_perfdata.avg_time = (node_perfdata.time / node_perfdata.count); // * 1.e-9; //katy nanos are SMALL
-            if (+node_perfdata.count === 0) node_perfdata.avg_time = node_perfdata.time;
             if (!node_perfdata.avg_time) node_perfdata.avg_time = 0;
+            node_perfdata.avg_direct_time = (node_perfdata.direct_time / node_perfdata.direct_count); // * 1.e-9;
+            if (!node_perfdata.avg_direct_time) node_perfdata.avg_direct_time = 0;
             d._perfdata = perfdata[prim_inst.indexOf(nodename)];  
-            d._perfdata.save_display_name = d._perfdata.display_name;
           }
           return d.id || (d.id = ++i); 
           });
  
  node.each(function(d){
-     console.log(d);
      if (d._perfdata) {
-         //Closing nodes below threshold
          if ((d._perfdata.avg_time < threshold) && (d.children)) { //katy
               if (d.children) {
                 d._children = d.children;
                 d.children = null;
-                
               } else {
                 d.children = d._children;
                 d._children = null;
               }
          }
-         //Reopening nodes above threshold
-         else if ((d._perfdata.avg_time >= threshold) && 
-                 (d.children === null) && 
-                 (d._children)) { 
-             d.children = d._children;
-             d._children = null;
+         if ((d._perfdata.avg_direct_time < threshold) && (d.children)) { //katy
+              if (d.children) {
+                d._children = d.children;
+                d.children = null;
+              } else {
+                d.children = d._children;
+                d._children = null;
+              }
          }
      }
  });
- 
-        // Enter any new modes at the parent's previous position.
+  // Enter any new modes at the parent's previous position.
   var nodeEnter = node.enter().append('g')
       .attr('class', 'node')
       .attr("transform", function(d) {
@@ -487,11 +422,6 @@ function update(source, perfdata, threshold) {
 // Add Triangle for nodes when collapsed and have children
 //katy
 
-    //hard coded the correct time katy
-    //orig
-    //"/phylanx/call-function$2$lra/2$33$5","call-function/lra(33, 5)",1,377929,-1
-    // new
-    //"/phylanx/call-function$2$lra/2$33$5","call-function/lra(33, 5)",1,377929000,-1
     var symbol = d3.symbol().size([150]);
     nodeEnter
         .append("path")
@@ -506,7 +436,7 @@ function update(source, perfdata, threshold) {
         .attr('transform', "rotate(-90)")
         .attr("stroke-dasharray", function(d){ //stroke solid/dashed by direct or not
           if (d._perfdata) {
-              return (d._perfdata.eval_direct === 1) ? "3, 3" : "0"; 
+              return (d._perfdata.avg_direct_time > 0) ? "3, 3" : "0"; 
           }
           return "0";
         })
@@ -515,6 +445,9 @@ function update(source, perfdata, threshold) {
         if (d._perfdata) { //color circle by time-per-instance
             if (d._perfdata.avg_time > 0) {
                 return colorTimeScale(d._perfdata.avg_time);
+            }
+            else if (d._perfdata.avg_direct_time > 0) {
+                return colorTimeScale(d._perfdata.avg_direct_time);
             }
             return "#fff";
         }
@@ -557,7 +490,12 @@ function update(source, perfdata, threshold) {
             if (d._perfdata.avg_time > 0) {
                 return colorTimeScale(d._perfdata.avg_time);
             }
+            else if (d._perfdata.avg_direct_time > 0) {
+                return colorTimeScale(d._perfdata.avg_direct_time);
+            }
         }
+        //return "#fff";
+        //return d._children ? "lightsteelblue" : "#fff";
     })
     .attr('cursor', 'pointer');
 
@@ -647,23 +585,20 @@ function prettyprintTime(time) {
     timeInSeconds = time * 1e-9;
     var exp = -Math.floor( Math.log(timeInSeconds) / Math.log(10))+1;
 
-    if (timeInSeconds > 1) { //second
-        return (timeInSeconds).toFixed(2) + " s";
+    if (exp == 0) { //second
+        return (timeInSeconds).toFixed(4) + " s";
     }
-    else if (exp == 1) {
-        return (timeInSeconds).toFixed(2) + " s"; //millisecond
-    }
-    else if ((exp > 1) && (exp <= 4)) {
-        return (timeInSeconds * 1000).toFixed(2) + " ms"; //millisecond
+    else if ((exp > 0) && (exp <= 4)) {
+        return (timeInSeconds * 1000).toFixed(4) + " ms"; //millisecond
     } 
     else if ((exp > 4) && (exp <= 7)) {
-        return (timeInSeconds * 1000000).toFixed(2)  + " us"; //microsecond
+        return (timeInSeconds * 1000000).toFixed(4)  + " us"; //microsecond
     }
     else if ((exp > 7) && (exp <= 10)){
-        return (timeInSeconds * 1000000000).toFixed(2)  + " ns"; //nanosecond
+        return (timeInSeconds * 1000000000).toFixed(4)  + " ns"; //nanosecond
     }
     else if ((exp > 10) && (exp <= 13)) {
-        return (timeInSeconds * 1000000000000).toFixed(2)  + " ps"; //picosecond
+        return (timeInSeconds * 1000000000000).toFixed(4)  + " ps"; //picosecond
     }
     return timeInSeconds + " s";
     
