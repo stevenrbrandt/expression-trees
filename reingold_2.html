@@ -8,191 +8,7 @@ EXCLUSIVE TIME
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="shortcut icon" href="#"/>
-
-<style>
-
-    p {
-        font: 12px sans-serif;
-    }
-    .node {
-      cursor: pointer;
-    }
-
-    .node circle {
-      fill: #fff;
-      stroke: steelblue;
-      stroke-width: 2px; /*1.5px; katy - may need to adjust so eyes can see pattern*/
-    }
-
-    .node text {
-      font: 10px sans-serif;
-    }
-
-    .link {
-      fill: none;
-      stroke: #ccc;
-      stroke-width: 2px;
-    }
-
-    .d3-tip {
-      line-height: 1;
-      padding: 6px;
-      background: rgba(0, 0, 0, 0.8);
-      color: #fff;
-      border-radius: 4px;
-      font-size: 12px;
-    }
- 
-    /* Creates a small triangle extender for the tooltip */
-    .d3-tip:after {
-      box-sizing: border-box;
-      display: inline;
-      font-size: 10px;
-      width: 100%;
-      line-height: 1;
-      color: rgba(0, 0, 0, 0.8);
-      content: "\25BC";
-      position: absolute;
-      text-align: center;
-      font: 12px sans-serif;
-    }
- 
-    /* Style northward tooltips specifically */
-    .d3-tip.n:after {
-      margin: -2px 0 0 0;
-      top: 100%;
-      left: 0;
-    }
-
-    .ticks {
-  font: 10px sans-serif;
-}
-
-.track,
-.track-inset,
-.track-overlay {
-  stroke-linecap: round;
-}
-
-.track {
-  stroke: #000;
-  stroke-opacity: 0.3;
-  stroke-width: 10px;
-}
-
-.track-inset {
-  stroke: #ddd;
-  stroke-width: 8px;
-}
-
-.track-overlay {
-  pointer-events: stroke;
-  stroke-width: 50px;
-  stroke: transparent;
-  cursor: crosshair;
-}
-
-.handle {
-  fill: #fff;
-  stroke: #000;
-  stroke-opacity: 0.5;
-  stroke-width: 1.25px;
-}
-    
-    
-#shapekey {
-    position: absolute;
-    text-align: left;
-    padding: 2px;
-    font: 12px sans-serif;
-    background: lightsteelblue;
-    border: 0px;
-    border-radius: 8px;
-    display: inline-block;
-    white-space: nowrap;
-}
-#navigate {
-    display: inline-block;
-    background: lightsteelblue;
-    padding: 2px;
-    border-radius: 8px
-}
-
-#legend {
-    width: 300px;
-    height: 100px;
-    /*position: absolute;*/
-    display: inline-block;
-}
-
-.node-line-key {
-    height: 10px;
-    width: 20px;
-}
-.node-shape-triangle {
-    height: 15px;
-    width: 20px;
-}
-.node-shape-circle {
-    height: 12px;
-    width: 20px;
-}
-
-/* Slider from w3 schools */
-/* The switch - the box around the slider */
-.toggleswitch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-/* Hide default HTML checkbox */
-.toggleswitch input {display:none;}
-
-/* The slider */
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-input+ .slider {
-  background-color: #08519c; /* dark blue */
-}
-
-input:checked + .slider {
-  background-color: #006d2c; /* dark green */
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px #006d2c;
-}
-
-input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
-</style>
+        <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <!--    <div id="navigate">
@@ -209,7 +25,7 @@ input:checked + .slider:before {
         <p><svg class="node-line-key"><path d="M 2 5 L 18 5" stroke-dasharray = "3,3" stroke="black"/></svg> synchronous (direct)</p>
         <p><svg class="node-line-key"><path d="M 2 5 L 18 5" stroke="black"/></svg> asynchronous (normal)</p>
         <p><svg class="node-line-key"><path d="M 2 5 L 18 5" stroke-dasharray="3,1" stroke="black"/></svg> undecided</p>
-        <p>Inclusive <label class="toggleswitch"><input type="checkbox" id="myCheck"><span class="slider"></span></label> Exclusive </p>
+        <p>Inclusive <label class="toggleswitch"><input type="checkbox" id="myCheck" onclick="toggleSwitchAction()"><span class="slider"></span></label> Exclusive </p>
     </div>
     <div id="legend"></div>
     <div id="vis"></div>
@@ -261,17 +77,17 @@ var tool_tip = d3.tip()
               return "<p>Primitive instance: " + d._perfdata.display_name + "</p>"+
                     "<p>Count: " + d._perfdata.count + "</p>" +
                     "<p>Exclusive time: " + prettyprintTime(d._perfdata.exclusiveTime) + " </p>" +
-                    "<p>Total time (async): " + prettyprintTime(d._perfdata.time) + " </p>";
+                    "<p>Inclusive time (async): " + prettyprintTime(d._perfdata.time) + " </p>";
           } else if (d._perfdata.eval_direct === 1) { // 1 direct
               return "<p>Primitive instance: " + d._perfdata.display_name + "</p>" +
                     "<p>Count: " + d._perfdata.count + "</p>" +
                     "<p>Exclusive time: " + prettyprintTime(d._perfdata.exclusiveTime) + " </p>" +
-                    "<p>Total time (direct): " + prettyprintTime(d._perfdata.time) + " </p>";
+                    "<p>Inclusive time (direct): " + prettyprintTime(d._perfdata.time) + " </p>";
           } else if (d._perfdata.eval_direct === -1) { // -1 undecided
               return "<p>Primitive instance: " + d._perfdata.display_name + "</p>" +
                     "<p>Count: " + d._perfdata.count + "</p>" +
                     "<p>Exclusive time: " + prettyprintTime(d._perfdata.exclusiveTime) + " </p>" +
-                    "<p>Total time (undecided): " + prettyprintTime(d._perfdata.time) + " </p>" +
+                    "<p>Inclusive time (undecided): " + prettyprintTime(d._perfdata.time) + " </p>" +
                     "<p>Evaluation style (direct or async) determined at runtime.</p>"; 
           } else {
               return "<p>Primitive instance: " + d._perfdata.display_name + "</p>" +
@@ -285,8 +101,7 @@ var svg = d3.select("#vis").append("svg")
   .append("g")
     .attr("transform", "translate("
           + margin.left + "," + margin.top + ")");
-  var i = 0,
-    duration = 750,
+var duration = 750,
     root;
     
 svg.call(tool_tip);
@@ -294,8 +109,6 @@ svg.call(tool_tip);
 
 // declares a tree layout and assigns the size
 var treemap = d3.tree().size([(height-margin.bottom), width]);
-
-var treemat = [1];
 
 d3.queue()
 //        .defer(d3.text, "20180406_flag_tree.txt")
@@ -327,15 +140,16 @@ function analyze(error, treeformat, perfdata) {
 //            domainTimes.push(avgTime); //katy check times * 1.e-9);
 //        }
         domainTimes.push(+d.time); //kttime
+        domainTimesIn.push(+d.time); //kttime
         prim_inst.push(d.primitive_instance);
     });
-    console.log(perfdata.length);
     
-
+    
+    //KATY WRONG EXTENT
     colorsGr = ["#edf8fb", "#b2e2e2", "#66c2a4", "#2ca25f", "#006d2c"]; //green
     colorsBl = ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"];  //blue
     colorTimeScale = d3.scaleQuantize() //went with log scale
-                .domain(d3.extent(domainTimes)) //domainTimes //kttime [0,10088524656]
+                .domain(d3.extent(domainTimesIn)) //domainTimes //kttime [0,10088524656]
                 .range(colorsGr);
     //gotta get the domain values for each color
     domainVals = [colorTimeScale.invertExtent(colorsGr[0])[0]];
@@ -349,7 +163,7 @@ function analyze(error, treeformat, perfdata) {
 threshold =  0;
 
 slider_x = d3.scaleLinear()
-             .domain([0,d3.extent(domainTimes)[1]]) //katy greatestVal
+             .domain([0,d3.extent(domainTimesIn)[1]]) //katy greatestVal
              .range([0, 500])
              .clamp(true);
 slider = svg.append("g")
@@ -398,7 +212,7 @@ handle = slider.insert("circle", ".track-overlay")
 
     update(root, perfdata, threshold, timetype);
     
-        x = d3.scaleLinear()
+    x = d3.scaleLinear()
         .domain([0, greatestVal])
         .range([0, 300]);
 
@@ -483,7 +297,7 @@ function updateLegend(domainVals, greatestVal, timetype) {
         .tickValues(domainVals)
         .tickFormat(function(d) { return prettyprintTime(d); }); // === 0.5 ? formatPercent(d) : formatNumber(100 * d); });
 
-    var g = d3.select(".legend")
+    var g = d3.select(".legend");
     g.select(".domain")
         .remove();
     if (timetype === "EXCLUSIVE") {
@@ -558,19 +372,22 @@ function update(source, perfdata, threshold, timetype) {
 
 
   // ****************** Nodes section ***************************
-
+ i = 0;
   // Update the nodes...
   var node = svg.selectAll('g.node')
       .data(nodes, function(d) {
           var nodename = d.data.name;
           // Change time to time-per-instance //katy
           if (prim_inst.indexOf(nodename) >= 0) {
+              //Necessary for tooltip
             node_perfdata = perfdata[prim_inst.indexOf(nodename)]; 
-            
+    
             node_perfdata.eval_direct = +node_perfdata.eval_direct; //how the node was run (async/sync/unk)
-            node_perfdata.avg_time = (node_perfdata.time / node_perfdata.count); // * 1.e-9; //katy nanos are SMALL
+            node_perfdata.avg_time = +(node_perfdata.time / node_perfdata.count); // * 1.e-9; //katy nanos are SMALL
             if (+node_perfdata.count === 0) node_perfdata.avg_time = node_perfdata.time;
             if (!node_perfdata.avg_time) node_perfdata.avg_time = 0;
+            
+            //Necessary for vis
             d._perfdata = perfdata[prim_inst.indexOf(nodename)];  
             d._perfdata.save_display_name = d._perfdata.display_name;
           }
@@ -729,10 +546,12 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
       .text(function(d) { 
           if (!d.children) {
             return d._perfdata.display_name; 
+                                                                                     n
           } else {
               return "";
           }
       });
+
 
   // UPDATE
   var nodeUpdate = nodeEnter.merge(node);
@@ -749,8 +568,11 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
     .attr('r', 12)
     .style("fill", function(d) { //katy
         if (d._perfdata) { //color circle by time-per-instance
-            if (d._perfdata.inclusiveTime > 0) {
-                return colorTimeScale(d._perfdata.inclusiveTime); //avg_Time
+            toggleswitch = d3.select("#myCheck");
+            if (toggleswitch.checked) {
+                return colorInTimeScale(d._perfdata.inclusiveTime); //avg_Time
+            } else {
+                return colorExTimeScale(d._perfdata.exclusiveTime);
             }
         }
     })
@@ -772,6 +594,7 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
   nodeExit.select('text')
     .style('fill-opacity', 1e-6);
     
+
 
   // ****************** links section ***************************
 
@@ -810,22 +633,22 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
   });
   
  //******* Determine whether to use inclusive or exclusive time
-    d3.select("#myCheck").on("click", function(d){
-        console.log("CHECKMATE", this.checked);
-        // true --> moves to exclusive
-        if (this.checked) {
-            timetype = "EXCLUSIVE";
-            updateLegend(domainValsEx, greatestValEx, timetype)
-            update(root, perfdata, threshold, timetype);
-            //g.selectAll("rect");
-      
-        //false --> moves to inclusive
-        }else {
-            timetype = "INCLUSIVE";
-            updateLegend(domainValsIn, greatestValIn, timetype)
-            update(root, perfdata, threshold, timetype);
-        }
-    });
+//    d3.select("#myCheck").on("click", function(d){
+//        console.log("CHECKMATE", this.checked);
+//        // true --> moves to exclusive
+//        if (this.checked) {
+//            timetype = "EXCLUSIVE";
+//            //updateLegend(domainValsEx, greatestValEx, timetype);
+//            //update(root, perfdata, threshold, timetype);
+//            //g.selectAll("rect");
+//      
+//        //false --> moves to inclusive
+//        }else {
+//            timetype = "INCLUSIVE";
+//            //updateLegend(domainValsIn, greatestValIn, timetype);
+//            //update(root, perfdata, threshold, timetype);
+//        }
+//    });
 
 
   //  addSlider(domainVals, greatestVal); //katy working-ish
@@ -881,9 +704,9 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
         })
         .style("stroke", "black")
         .style("fill", function(d) { //katy
-            console.log(d.open)
+            console.log(d.open);
             if (d._perfdata) {
-                return colorTimeScale(d._perfdata.inclusiveTime);
+                return colorInTimeScale(d._perfdata.inclusiveTime);
             }
             return "black";
     });
@@ -916,6 +739,27 @@ function prettyprintTime(time) {
         return (timeInSeconds * 1000000000000).toFixed(2)  + " ps"; //picosecond
     }
     return timeInSeconds + " s";
+    
+}
+
+function toggleSwitchAction() {
+    console.log("I clicked the toggleswitch");
+    toggleswitch = d3.select("#myCheck");
+    
+    svg.selectAll(".node").selectAll("path").transition()
+            .style("fill", function(d){
+            if (d._perfdata) {
+                if (toggleswitch.checked) {
+                    timetype = "INCLUSIVE";
+                    updateLegend(domainValsIn, greatestValIn, timetype);
+                    return colorInTimeScale(d._perfdata.inclusiveTime); //avg_Time
+                } else {
+                    timetype = "EXCLUSIVE";
+                    updateLegend(domainValsEx, greatestValEx, timetype);
+                    return colorExTimeScale(d._perfdata.exclusiveTime);
+                }
+            } else { return "white"; }
+        });
     
 }
 </script>
