@@ -144,10 +144,9 @@ function analyze(error, treeformat, perfdata) {
         prim_inst.push(d.primitive_instance);
     });
     
-    
-    //KATY WRONG EXTENT
+
     colorsGr = ["#edf8fb", "#b2e2e2", "#66c2a4", "#2ca25f", "#006d2c"]; //green
-    colorsBl = ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"];  //blue
+    colorsPur = ["#f2f0f7", "#cbc9e2", "#9e9ac8", "#756bb1", "#54278f"];  //blue
     colorTimeScale = d3.scaleQuantize() //went with log scale
                 .domain(d3.extent(domainTimesIn)) //domainTimes //kttime [0,10088524656]
                 .range(colorsGr);
@@ -216,7 +215,8 @@ handle = slider.insert("circle", ".track-overlay")
         .domain([0, greatestVal])
         .range([0, 300]);
 
-    xAxis = d3.axisBottom(x)
+    xAxis = d3.axisBottom()
+        .scale(x)
         .tickSize(13)
         .tickValues(domainVals)
         .tickFormat(function(d) { return prettyprintTime(d); }); // === 0.5 ? formatPercent(d) : formatNumber(100 * d); });
@@ -286,49 +286,48 @@ function collapse(d) {
 
 
 
-function updateLegend(domainVals, greatestVal, timetype) {
-    console.log(x.domain(), x.range(), greatestVal, domainVals);
-    
-    x.domain([0, greatestVal])
-        .range([0, 300]); //I think this is a subrange of the current range?
-
-    xAxis = d3.axisBottom(x)
-        .tickSize(13)
-        .tickValues(domainVals)
-        .tickFormat(function(d) { return prettyprintTime(d); }); // === 0.5 ? formatPercent(d) : formatNumber(100 * d); });
-
-    var g = d3.select(".legend");
-    g.select(".domain")
-        .remove();
-    if (timetype === "EXCLUSIVE") {
-        console.log(g.selectAll("rect"));
-        g.selectAll("rect")
-            .transition()
-            .attr("x", function(d) { console.log(x(d[0])); return x(d[0]); })
-            .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-            .style("fill", function(d) { 
-                return colorExTimeScale(d[0]); 
-            });
-    }
-    else {
-        console.log(g.selectAll("rect"));
-        g.selectAll("rect")
-            .transition()
-            .attr("x", function(d) { return x(d[0]); })
-            .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-            .style("fill", function(d) { 
-                return colorInTimeScale(d[0]); 
-            });
-    }
-    g.append("text")
-        .attr("fill", "#000")
-        .attr("font-weight", "bold")
-        .attr("text-anchor", "start")
-        .attr("y", -6)
-        .text("Average time per instance"); 
-               
-    
-}
+//function updateLegend(domainVals, greatestVal, timetype) {
+//    
+//    x.domain([0, greatestVal])
+//        .range([0, 300]); //I think this is a subrange of the current range?
+//
+//    xAxis = d3.axisBottom(x)
+//        .tickSize(13)
+//        .tickValues(domainVals)
+//        .tickFormat(function(d) { return prettyprintTime(d); }); // === 0.5 ? formatPercent(d) : formatNumber(100 * d); });
+//
+//    var g = d3.select(".legend");
+//    g.select(".domain")
+//        .remove();
+//    if (timetype === "EXCLUSIVE") {
+//        g.selectAll("rect")
+//            .transition()
+//            .attr("x", function(d) { 
+//                    return x(d[0]); 
+//                })
+//            .attr("width", function(d) { return x(d[1]) - x(d[0]); })
+//            .style("fill", function(d) { 
+//                return colorExTimeScale(d[0]); 
+//            });
+//    }
+//    else {
+//        g.selectAll("rect")
+//            .transition()
+//            .attr("x", function(d) { return x(d[0]); })
+//            .attr("width", function(d) { return x(d[1]) - x(d[0]); })
+//            .style("fill", function(d) { 
+//                return colorInTimeScale(d[0]); 
+//            });
+//    }
+//    g.append("text")
+//        .attr("fill", "#000")
+//        .attr("font-weight", "bold")
+//        .attr("text-anchor", "start")
+//        .attr("y", -6)
+//        .text("Average time per instance"); 
+//               
+//    
+//}
 
 // Count the number of nodes at each level
 function countNodes(node) {
@@ -410,8 +409,8 @@ function update(source, perfdata, threshold, timetype) {
      }
  });
 
-//greatestValEx = d3.extent(domainTimesEx)[1];
-//greatestValIn = d3.extent(domainTimesIn)[1];
+greatestValEx = d3.extent(domainTimesEx)[1];
+greatestValIn = d3.extent(domainTimesIn)[1];
 
 colorExTimeScale = d3.scaleQuantize() //went with log scale
                 .domain([0, d3.extent(domainTimesEx)[1]]) //domainTimes //kttime issue
@@ -425,12 +424,12 @@ colorExTimeScale = d3.scaleQuantize() //went with log scale
     
 colorInTimeScale = d3.scaleQuantize() //went with log scale
                 .domain(d3.extent(domainTimesIn)) //domainTimes 
-                .range(colorsBl);
+                .range(colorsPur);
     //gotta get the domain values for each color
-    domainValsIn = [colorInTimeScale.invertExtent(colorsBl[0])[0]];
-    greatestValIn = colorInTimeScale.invertExtent(colorsBl[colorsBl.length-1])[1];
-    for (var i=0; i<colorsBl.length; i++){
-        domainValsIn.push(colorInTimeScale.invertExtent(colorsBl[i])[1]);
+    domainValsIn = [colorInTimeScale.invertExtent(colorsPur[0])[0]];
+    greatestValIn = colorInTimeScale.invertExtent(colorsPur[colorsPur.length-1])[1];
+    for (var i=0; i<colorsPur.length; i++){
+        domainValsIn.push(colorInTimeScale.invertExtent(colorsPur[i])[1]);
     }
  
  node.each(function(d){
@@ -438,7 +437,7 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
      if (d._perfdata) {
          //Closing nodes below threshold
          if ((d._perfdata.avg_time < threshold) && (d.children)) { //katy
-             console.log(threshold);
+            
               if (d.children) {
                 d._children = d.children;
                 d.children = null;
@@ -666,7 +665,6 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
   // Toggle children on click.
   function click(d) { //so children aren't behaving
       
-    console.log(this, d.id);
     if (d.open === 1) {
         console.log("it's open");
         d.open = 0;
@@ -704,7 +702,7 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
         })
         .style("stroke", "black")
         .style("fill", function(d) { //katy
-            console.log(d.open);
+            
             if (d._perfdata) {
                 return colorInTimeScale(d._perfdata.inclusiveTime);
             }
@@ -743,23 +741,59 @@ function prettyprintTime(time) {
 }
 
 function toggleSwitchAction() {
-    console.log("I clicked the toggleswitch");
-    toggleswitch = d3.select("#myCheck");
-    
+    toggleswitch = document.getElementById("myCheck");
+    (toggleswitch.checked === true) ? timetype = "EXCLUSIVE" : timetype = "INCLUSIVE";
+
+ 
     svg.selectAll(".node").selectAll("path").transition()
             .style("fill", function(d){
             if (d._perfdata) {
-                if (toggleswitch.checked) {
-                    timetype = "INCLUSIVE";
-                    updateLegend(domainValsIn, greatestValIn, timetype);
-                    return colorInTimeScale(d._perfdata.inclusiveTime); //avg_Time
+                if (timetype === "EXCLUSIVE") {
+                    //updateLegend(domainValsIn, greatestValIn, timetype);
+                    return colorExTimeScale(d._perfdata.exclusiveTime); //avg_Time
                 } else {
-                    timetype = "EXCLUSIVE";
-                    updateLegend(domainValsEx, greatestValEx, timetype);
-                    return colorExTimeScale(d._perfdata.exclusiveTime);
+                    //updateLegend(domainValsEx, greatestValEx, timetype);
+                    return colorInTimeScale(d._perfdata.inclusiveTime);
                 }
             } else { return "white"; }
         });
+        
+    (timetype === "EXCLUSIVE") ? x.domain([0,greatestValEx]) : x.domain([0,greatestValIn]); 
+
+    console.log(timetype, x.domain());
+  
+//    xAxis.tickValues(function(d){
+//        console.log("set tick vals");
+//        return (timetype === "EXCLUSIVE") ? domainValsEx : domainValsIn;
+//    });
+    //xAxis.tickValues([0,1,2,3,4]);
+    (timetype === "EXCLUSIVE") ? xAxis.tickValues(domainValsEx) : xAxis.tickValues(domainValsIn);
+// 
+
+    d3.select(".x").transition().call(xAxis);
+    
+    
+
+    var g = d3.select(".legend");
+    
+    g.select(".domain")
+        .remove();
+    
+    (timetype === "EXCLUSIVE") ? currentColorTimeScale = colorExTimeScale : currentColorTimeScale = colorInTimeScale; 
+    g.selectAll("rect")
+            .data(
+                currentColorTimeScale.range().map(function(color) {
+                var d = currentColorTimeScale.invertExtent(color);
+                if (d[0] === null) d[0] = x.domain()[0];
+                if (d[1] === null) d[1] = x.domain()[1];
+                return d;
+            }))
+            .transition()
+            .attr("x", function(d){ return x(d[0]); })
+            .attr("width", function(d){ return x(d[1]) - x(d[0]); })
+            .style("fill", function(d) {
+                return (timetype === "EXCLUSIVE") ? colorExTimeScale(d[0]) : colorInTimeScale(d[0]);
+    });
     
 }
 </script>
