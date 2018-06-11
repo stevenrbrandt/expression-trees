@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
-Katy worked on 5/17
-EXCLUSIVE TIME
+Katy worked on 6/7
+Need to convert back to average time
 -->
 <head>
 <title>Slider Reingold-Tilford Tree</title>
@@ -285,50 +285,6 @@ function collapse(d) {
 }
 
 
-
-//function updateLegend(domainVals, greatestVal, timetype) {
-//    
-//    x.domain([0, greatestVal])
-//        .range([0, 300]); //I think this is a subrange of the current range?
-//
-//    xAxis = d3.axisBottom(x)
-//        .tickSize(13)
-//        .tickValues(domainVals)
-//        .tickFormat(function(d) { return prettyprintTime(d); }); // === 0.5 ? formatPercent(d) : formatNumber(100 * d); });
-//
-//    var g = d3.select(".legend");
-//    g.select(".domain")
-//        .remove();
-//    if (timetype === "EXCLUSIVE") {
-//        g.selectAll("rect")
-//            .transition()
-//            .attr("x", function(d) { 
-//                    return x(d[0]); 
-//                })
-//            .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-//            .style("fill", function(d) { 
-//                return colorExTimeScale(d[0]); 
-//            });
-//    }
-//    else {
-//        g.selectAll("rect")
-//            .transition()
-//            .attr("x", function(d) { return x(d[0]); })
-//            .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-//            .style("fill", function(d) { 
-//                return colorInTimeScale(d[0]); 
-//            });
-//    }
-//    g.append("text")
-//        .attr("fill", "#000")
-//        .attr("font-weight", "bold")
-//        .attr("text-anchor", "start")
-//        .attr("y", -6)
-//        .text("Average time per instance"); 
-//               
-//    
-//}
-
 // Count the number of nodes at each level
 function countNodes(node) {
     if(node.children){
@@ -397,11 +353,11 @@ function update(source, perfdata, threshold, timetype) {
      d.childrenTime = 0;
      if (d.children) {
          for (child of d.children) {
-             d.childrenTime += +(child._perfdata.avg_time);
+             d.childrenTime += +(child._perfdata.time);
          }
      }
      if (d._perfdata) {
-         d._perfdata.exclusiveTime = d._perfdata.avg_time - d.childrenTime;
+         d._perfdata.exclusiveTime = d._perfdata.time - d.childrenTime;
          d._perfdata.inclusiveTime = +d._perfdata.time;
          //Katy
          domainTimesEx.push(d._perfdata.exclusiveTime);
@@ -513,20 +469,20 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
         .style("fill", function(d) { //katy
         if (d._perfdata) { //color circle by time-per-instance
             if (timetype === "EXCLUSIVE") {
-                if (d._perfdata.exclusiveTime > 0) {
+                if (d._perfdata.exclusiveTime >= 0) {
                     return colorExTimeScale(d._perfdata.exclusiveTime);
                 } else if (d._perfdata.exclusiveTime < 0) {
                     return "purple";
                 }
-                return "white";
+                return "magenta";
             }
             else if (timetype === "INCLUSIVE") {
-                if (d._perfdata.inclusiveTime > 0) {
+                if (d._perfdata.inclusiveTime >= 0) {
                     return colorInTimeScale(d._perfdata.inclusiveTime);
                 } else if (d._perfdata.inclusiveTime < 0) {
                     return "blue";
                 }
-                return "white";
+                return "magenta";
             }
         }
         return "white";
@@ -631,25 +587,6 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
     d.y0 = d.y;
   });
   
- //******* Determine whether to use inclusive or exclusive time
-//    d3.select("#myCheck").on("click", function(d){
-//        console.log("CHECKMATE", this.checked);
-//        // true --> moves to exclusive
-//        if (this.checked) {
-//            timetype = "EXCLUSIVE";
-//            //updateLegend(domainValsEx, greatestValEx, timetype);
-//            //update(root, perfdata, threshold, timetype);
-//            //g.selectAll("rect");
-//      
-//        //false --> moves to inclusive
-//        }else {
-//            timetype = "INCLUSIVE";
-//            //updateLegend(domainValsIn, greatestValIn, timetype);
-//            //update(root, perfdata, threshold, timetype);
-//        }
-//    });
-
-
   //  addSlider(domainVals, greatestVal); //katy working-ish
   // Creates a curved (diagonal) path from parent to the child nodes
   function diagonal(s, d) {
@@ -759,23 +696,10 @@ function toggleSwitchAction() {
         });
         
     (timetype === "EXCLUSIVE") ? x.domain([0,greatestValEx]) : x.domain([0,greatestValIn]); 
-
-    console.log(timetype, x.domain());
-  
-//    xAxis.tickValues(function(d){
-//        console.log("set tick vals");
-//        return (timetype === "EXCLUSIVE") ? domainValsEx : domainValsIn;
-//    });
-    //xAxis.tickValues([0,1,2,3,4]);
     (timetype === "EXCLUSIVE") ? xAxis.tickValues(domainValsEx) : xAxis.tickValues(domainValsIn);
-// 
-
     d3.select(".x").transition().call(xAxis);
     
-    
-
     var g = d3.select(".legend");
-    
     g.select(".domain")
         .remove();
     
