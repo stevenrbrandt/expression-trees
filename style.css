@@ -104,12 +104,29 @@ background: lightsteelblue;
 padding: 2px;
 border-radius: 8px
 }
+#code-view {
+    position: absolute;
+    left: 180px;
+    width: 500px;
+    height: 80px;
+    padding: 5px;
+    border-radius: 8px;
+    border: 0px;
+    background: #eff3f8;
+    
+}
+#code-view p { 
+    margin-bottom: -12px;
+}
 
 #legend {
-width: 300px;
-height: 100px;
-/*position: absolute;*/
-display: inline-block;
+/*width: 350px;
+height: 120px;*/
+/*position: absolute;
+display: inline-block;*/
+position: absolute;
+top: 70px;
+    
 }
 
 .node-line-key {
