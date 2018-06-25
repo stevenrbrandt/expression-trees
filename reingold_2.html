@@ -122,15 +122,15 @@ vmcode = new Vue({
             //,
             //template: '<p>{{ message }}',
         });
-codeData = makeCodeArray("lra.physl");
+codeData = makeCodeArray("als_csv_instrumented");
 
 d3.queue()
 //        .defer(d3.text, "20180406_flag_tree.txt")
 //        .defer(d3.csv, "20180406_flag_perfdata.csv")
 //        .defer(d3.text, "20180501_tree.txt")
 //        .defer(d3.csv, "20180501_perf.csv")
-        .defer(d3.text, "20180519_tree_alsmovie.txt")
-        .defer(d3.csv, "20180519_perfdata_alsmovie.csv")
+        .defer(d3.text, "20180625_treeformat_alsmovie.txt")
+        .defer(d3.csv, "20180625_perfdata_alsmovie.csv")
         .await(analyze);
 
 function analyze(error, treeformat, perfdata) {
@@ -623,10 +623,13 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
   }
 
   function showNodeCode(d) {
-    var hashIndex = d.data.name.lastIndexOf("$"); //was "#"
-    
-    if (hashIndex > -1) {
-        linenum = parseInt(d.data.name.substring(hashIndex+1));
+    var locationArray= d.data.name.split("$"); //was "#"
+    console.log(locationArray[locationArray.length - 2]);
+    linenum = parseInt(locationArray[locationArray.length - 2]);
+    var offset = 516;
+    if (linenum > -1) {
+        linenum = linenum + offset;
+        console.log(linenum, linenum-offset);
 //        d3.select("pre").attr("data-start", linenum);
         var aa = linenum-2,
             bb = linenum-1, 
@@ -634,8 +637,8 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
             dd = linenum+1, 
             ee = linenum+2;
         
-        vmcode.rawHtml = "<p>" + aa + " | " + codeArray[linenum-3] + "</p><p>" + bb + " | " + codeArray[linenum-2] + "</p><p style=\"background-color:yellow;\">" + cc + " | " + codeArray[linenum-1] + "</p><p>" + dd + " | " + codeArray[linenum] + "</p><p>" + ee + " | " + codeArray[linenum+1] + "</p>";
-        console.log(linenum-3, linenum-2, linenum-1, linenum, linenum+1);
+        vmcode.rawHtml = "<p>" + aa + " | " + codeArray[aa-1] + "</p><p>" + bb + " | " + codeArray[bb-1] + "</p><p style=\"background-color:yellow;\">" + cc + " | " + codeArray[cc-1] + "</p><p>" + dd + " | " + codeArray[dd-1] + "</p><p>" + ee + " | " + codeArray[ee-1] + "</p>";
+        console.log(aa-1, bb-1, cc-1, dd-1, ee-1);
     }
   }
   function hideNodeCode(d) {
