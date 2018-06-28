@@ -106,10 +106,10 @@ border-radius: 8px
 }
 #code-view {
     position: absolute;
-    left: 180px;
-    width: 500px;
-    height: 80px;
-    padding: 5px;
+    left: 880px; /*180px; when codeview was top & left*/
+/*    width: 500px;*/
+/*    height: 80px;*/
+    padding: 0 0 25 0;
     border-radius: 8px;
     border: 0px;
     background: #eff3f8;
@@ -120,13 +120,7 @@ border-radius: 8px
 }
 
 #legend {
-/*width: 350px;
-height: 120px;*/
-/*position: absolute;
-display: inline-block;*/
 position: absolute;
-top: 70px;
-    
 }
 
 .node-line-key {
