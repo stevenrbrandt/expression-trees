@@ -27,7 +27,7 @@ Need to convert back to average time
         <p><svg class="node-line-key"><path d="M 2 5 L 18 5" stroke-dasharray="3,1" stroke="black"/></svg> undecided</p>
         <p>Inclusive <label class="toggleswitch"><input type="checkbox" id="myCheck" onclick="toggleSwitchAction()"><span class="slider"></span></label> Exclusive </p>
     </div>
-    <div id="code-view"><span v-html="rawHtml"></span></div>
+    <div id="code-view" style="height: 500px; overflow:scroll;"><span v-html="rawHtml"></span></div>
     <div id="legend"></div>
     <div id="tree-vis"></div>
 <!-- Copyright 2011 Jason Davies https://github.com/jasondavies/newick.js -->
@@ -62,6 +62,16 @@ d3.selectAll(".node-shape-circle").insert("g")
         .attr("transform", "translate(10,6)")
         .style("stroke", "black")
         .style("fill", "white");
+d3.selectAll(".node-shape-cross").insert("g")
+        .selectAll("path").data(["cross"]).enter()
+        .append("path")
+        .attr("d", symbol.type(function(d) {
+            return d3.symbolCross;
+        }))
+        .attr("transform", "translate(10,6)")
+        .style("stroke", "black")
+        .style("fill", "white");
+
     
 // Set the dimensions and margins of the diagram
 var margin = {top: 50, right: 90, bottom: 30, left: 90},
@@ -73,9 +83,9 @@ var tool_tip = d3.tip()
       .attr("class", "d3-tip")
       .offset([-8, 0])
       .html(function(d){ 
-          if (d.id === 1) {
-              return "<p>Function: " + d.data.name + "</p>";
-          }
+//          if (d.id === 1) {
+//              return "<p>Function: " + d.data.name + "</p>";
+//          }
           if (d._perfdata.eval_direct === 0) { // 0 async
               return "<p>Primitive instance: " + d._perfdata.display_name + "</p>"+
                     "<p>Count: " + d._perfdata.count + "</p>" +
@@ -122,7 +132,6 @@ vmcode = new Vue({
             //,
             //template: '<p>{{ message }}',
         });
-codeSpace = screen.width - width + margin.right + margin.left;
 
 codeData = makeCodeArray("als.physl");
 
@@ -291,11 +300,20 @@ handle = slider.insert("circle", ".track-overlay")
 
 // Collapse the node and all it's children
 function collapse(d) {
+  var myLineNum = getLineNum(d);
   
-  if(d.children) {
-    d._children = d.children;
-    d._children.forEach(collapse);
-    d.children = null;
+  if (d.children) {
+      var remainingChildren = [];
+      for (k in d.children) {
+          var childNum = getLineNum(d.children[k]);
+          if (childNum === myLineNum) {
+              console.log("collapse me", myLineNum);
+              d.children[k].children = null;
+          } else {
+              remainingChildren.push(d.children[k]);
+          }
+      }
+    d.children.forEach(collapse);
   }
 }
 
@@ -368,7 +386,10 @@ function update(source, perfdata, threshold, timetype) {
      d.childrenTime = 0;
      if (d.children) {
          for (child of d.children) {
-             d.childrenTime += +(child._perfdata.time);
+             //d.childrenTime += +(child._perfdata.time); //sum children
+             if (child._perfdata.time > d.childrenTime) {
+                 d.childrenTime = child._perfdata.time;
+             }
          }
      }
      if (d._perfdata) {
@@ -403,8 +424,7 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
         domainValsIn.push(colorInTimeScale.invertExtent(colorsPur[i])[1]);
     }
  
- node.each(function(d){
-     
+/*node.each(function(d){
      if (d._perfdata) {
          //Closing nodes below threshold
          if ((d._perfdata.avg_time < threshold) && (d.children)) { //katy
@@ -427,12 +447,12 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
 //             d._children = null;
 //         }
      }
- });
+ });*/
  
         // Enter any new modes at the parent's previous position.
   var nodeEnter = node.enter().append('g')
       .attr('class', 'node')
-      .attr('id', function(d) {showNodeCode(d); return "#"+d.id;})
+      .attr('id', function(d) {showNodeCode(d); return d.id;})
       .attr("transform", function(d) {
         return "translate(" + source.y0 + "," + source.x0 + ")";
     })  
@@ -440,6 +460,7 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
     .on("mouseenter", tool_tip.show)
     .on("mouseout", tool_tip.hide);
 
+    
   // Add Circle for the nodes
 //  nodeEnter.append('circle')
 //      .attr('class', 'node')
@@ -466,12 +487,12 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
         .append("path")
         .attr("class", "node plain-circle")
         .attr("d", symbol.type(function(d){
-//            console.log(d.children, d._children, d.parent);
-//            if (d.children) {
-                return d3.symbolCircle; //symbolTriangle
-//            } else {
-//                return d3.symbolCircle;
-//            }
+            if (closeLineChildren(d)) {
+                d.children = null;
+                return d3.symbolCross; //symbolTriangle
+            } else {
+                return d3.symbolCircle;
+            }
         }))
         .attr('transform', "rotate(-90)")
         .attr("stroke-dasharray", function(d){ //stroke solid/dashed by direct or not
@@ -536,13 +557,12 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
       })
       .text(function(d) { 
           if (!d.children) {
-            return d._perfdata.display_name; 
-                                                                                     n
+            return d._perfdata.display_name;              
           } else {
               return "";
           }
       });
-
+    
 
   // UPDATE
   var nodeUpdate = nodeEnter.merge(node);
@@ -568,6 +588,7 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
         }
     })
     .attr('cursor', 'pointer');
+    
 
   // Remove any exiting nodes
   var nodeExit = node.exit().transition()
@@ -634,11 +655,30 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
 
     return path;
   }
+  
+  function closeLineChildren(d) {
+      var myLineNum = getLineNum(d);
+      if (d.children) {
+          for (k in d.children) {
+              var childNum = getLineNum(d.children[k]);
+              if (childNum === myLineNum) {
+                  var k = '#' + d.id;
+                  console.log("collapse me", d.id);
+                  return true;
+//                d._children = d.children;
+//                d.children = null;
+//                d.visited = true;
+//                return true;
+              } else { return false; }
+          }
+      }
+  }
+  
 
   function showNodeCode(d) {
     var locationArray= d.data.name.split("$"); //was "#"
     linenum = parseInt(locationArray[locationArray.length - 2]);
-
+    linenum = getLineNum(d);
     if (linenum > -1) {
         //linenum = linenum + offset;
         //console.log(linenum, linenum-offset);
@@ -673,25 +713,24 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
   function hideNodeCode(d) {
       
   }
+  
   // Toggle children on click.
   function click(d) { //so children aren't behaving
-    
     if (d.open === 1) {
         console.log("it's open");
         d.open = 0;
-        
     } else {
         console.log("CLOSED");
         d.open = 1;
     }
     if (d.children) {
         d._children = d.children;
-        d.children = null;
-            
-      } else {
+        d.children = null;    
+    } else {
         d.children = d._children;
         d._children = null;
-      }
+    }
+    
     d3.select(this).select("path")
         .attr("d", symbol.type(function(d){
             if (d.open === 0) {
@@ -756,6 +795,10 @@ function toggleSwitchAction() {
             if (d._perfdata) {
                 if (timetype === "EXCLUSIVE") {
                     //updateLegend(domainValsIn, greatestValIn, timetype);
+                    if (d._perfdata.exclusiveTime < 0) {
+                        console.log(d._perfdata.exclusiveTime);
+                        return "magenta";
+                    }
                     return colorExTimeScale(d._perfdata.exclusiveTime); //avg_Time
                 } else {
                     //updateLegend(domainValsEx, greatestValEx, timetype);
@@ -794,9 +837,15 @@ function makeCodeArray(physlfile) {
     codeArray = [];
     d3.text(physlfile, function(data){
         codeArray = data.split('\n');
-    });
+    });  
     
     return codeArray;
 }
+
+  function getLineNum(d) {
+    var locationArray= d.data.name.split("$"); //was "#"
+    var linenum = parseInt(locationArray[locationArray.length - 2]);
+    return linenum;
+  }
 </script>
            
