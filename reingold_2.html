@@ -127,21 +127,23 @@ var treemap = d3.tree().size([(height-margin.bottom), width]);
 vmcode = new Vue({
             el: '#code-view',
             data: {
-                rawHtml: '<p style=\"font: \"Courier\";\">0 | Code View</p>'
+                rawHtml: '<p style=\"font: \"Courier\";\">0 | Code View</p>',
+                windowWidth: window.height
             }
-            //,
-            //template: '<p>{{ message }}',
         });
 
-codeData = makeCodeArray("als.physl");
+//codeData = makeCodeArray("als2.physl");
+codeData = makeCodeArray("als_csv_instrumented.cpp");
 
 d3.queue()
 //        .defer(d3.text, "20180406_flag_tree.txt")
 //        .defer(d3.csv, "20180406_flag_perfdata.csv")
 //        .defer(d3.text, "20180501_tree.txt")
 //        .defer(d3.csv, "20180501_perf.csv")
-        .defer(d3.text, "20180625_treeformat_alsmovie.txt")
-        .defer(d3.csv, "20180625_perfdata_alsmovie.csv")
+//        .defer(d3.text, "20180625_treeformat_alsmovie.txt")
+//        .defer(d3.csv, "20180625_perfdata_alsmovie.csv")
+        .defer(d3.text, "20180713_als_tree.txt")
+        .defer(d3.csv, "20180713_als_perfdata.csv")
         .await(analyze);
 
 function analyze(error, treeformat, perfdata) {
@@ -296,27 +298,6 @@ handle = slider.insert("circle", ".track-overlay")
     //count = 1; //count the root
     //countNodes(root);
 }
-
-
-// Collapse the node and all it's children
-function collapse(d) {
-  var myLineNum = getLineNum(d);
-  
-  if (d.children) {
-      var remainingChildren = [];
-      for (k in d.children) {
-          var childNum = getLineNum(d.children[k]);
-          if (childNum === myLineNum) {
-              console.log("collapse me", myLineNum);
-              d.children[k].children = null;
-          } else {
-              remainingChildren.push(d.children[k]);
-          }
-      }
-    d.children.forEach(collapse);
-  }
-}
-
 
 // Count the number of nodes at each level
 function countNodes(node) {
@@ -486,14 +467,11 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
     nodeEnter
         .append("path")
         .attr("class", "node plain-circle")
-        .attr("d", symbol.type(function(d){
-            if (closeLineChildren(d)) {
-                d.children = null;
-                return d3.symbolCross; //symbolTriangle
-            } else {
-                return d3.symbolCircle;
-            }
-        }))
+        .attr("d", symbol.type(function(d) {
+//            closeLineChildren(d); //katy line close
+//            if (d.linenode) { return d3.symbolCross; }
+            return d3.symbolCircle;
+    }))
         .attr('transform', "rotate(-90)")
         .attr("stroke-dasharray", function(d){ //stroke solid/dashed by direct or not
           if (d._perfdata) {
@@ -544,7 +522,6 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
             hideNodeCode(d);
             
         });
-
 
 // Add labels for the nodes
   nodeEnter.append('text')
@@ -659,25 +636,34 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
   function closeLineChildren(d) {
       var myLineNum = getLineNum(d);
       if (d.children) {
+          var combinedName = d.data.name;
           for (k in d.children) {
+              combinedName += d.children[k].data.name;
               var childNum = getLineNum(d.children[k]);
               if (childNum === myLineNum) {
-                  var k = '#' + d.id;
-                  console.log("collapse me", d.id);
+                  d.linenode = true;
+                  if (d.parent.linenode) {
+                      d.x = d.parent.x;
+                      d.y = d.parent.y;
+//                      d.linenode = false;
+                  }
+                  if ((d.parent.linenode) && (!d.children[k].children)) {
+//                      d.x = d.parent.x;
+//                      d.y = d.parent.y;
+                      d.leafnode = true;
+//                      d.linenode = false;
+                      console.log(combinedName);
+                      return false;
+                  }
                   return true;
-//                d._children = d.children;
-//                d.children = null;
-//                d.visited = true;
-//                return true;
               } else { return false; }
+              combinedName = d.data.name;
           }
       }
   }
   
 
   function showNodeCode(d) {
-    var locationArray= d.data.name.split("$"); //was "#"
-    linenum = parseInt(locationArray[locationArray.length - 2]);
     linenum = getLineNum(d);
     if (linenum > -1) {
         //linenum = linenum + offset;
@@ -688,24 +674,34 @@ colorInTimeScale = d3.scaleQuantize() //went with log scale
 //            cc = linenum, 
 //            dd = linenum+1, 
 //            ee = linenum+2;
-        var codeViewText = "";
+        
+        offset = 0;
+        first = true;
         for (i=0; i<codeArray.length; i++) {
-            if (i < 9) {
-                if (i === linenum - 1) {
-                    codeViewText += "<pre style=\"background-color:yellow; margin-bottom: -12px; \">" + (i+1) + "  | " + codeArray[i] + "</pre>";
-                } else {
-                    codeViewText += "<pre style=\"margin-bottom: -12px;\">" + (i+1) + "  | " + codeArray[i] + "</pre>";
-                }
-            } else {
-                if (i === linenum - 1) {
-                    codeViewText += "<pre style=\"background-color:yellow; margin-bottom: -12px;\">" + (i+1) + " | " + codeArray[i] + "</pre>";
-                } else {
-                    codeViewText += "<pre style=\"margin-bottom: -12px;\">" + (i+1) + " | " + codeArray[i] + "</pre>";
-                }
+            if (codeArray[i].includes("char const* const als_explicit") && first) {
+                offset = i;
+                first = false;
             }
         }
-        vmcode.rawHtml = codeViewText;
-        
+        var codeViewText = "";
+        for (i=0; i<codeArray.length; i++) {
+//            if (i < 9) {
+//                if (i === linenum - 1) {
+//                    codeViewText += "<pre style=\"background-color:yellow; margin-bottom: -12px; \">" + (i+1) + "  | " + codeArray[i+offset] + "</pre>";
+//                } else {
+//                    codeViewText += "<pre style=\"margin-bottom: -12px;\">" + (i+1) + "  | " + codeArray[i+offset] + "</pre>";
+//                }
+//            } else {
+//                if (i === linenum - 1) {
+//                    codeViewText += "<pre style=\"background-color:yellow; margin-bottom: -12px;\">" + (i+1) + " | " + codeArray[i+offset] + "</pre>";
+//                } else {
+//                    codeViewText += "<pre style=\"margin-bottom: -12px;\">" + (i+1) + " | " + codeArray[i+offset] + "</pre>";
+//                }
+//            }
+            
+            codeViewText += codeArray[i] + "\n";
+        }
+        vmcode.rawHtml = "<pre>" + codeViewText + "</pre>";
         //vmcode.rawHtml = "<p>" + (aa-offset) + " | " + codeArray[aa-1] + "</p><p>" + (bb-offset) + " | " + codeArray[bb-1] + "</p><p style=\"background-color:yellow;\">" + (cc-offset) + " | " + codeArray[cc-1] + "</p><p>" + (dd-offset) + " | " + codeArray[dd-1] + "</p><p>" + (ee-offset) + " | " + codeArray[ee-1] + "</p>";
         //console.log(aa-1, bb-1, cc-1, dd-1, ee-1);
     }
@@ -844,8 +840,11 @@ function makeCodeArray(physlfile) {
 
   function getLineNum(d) {
     var locationArray= d.data.name.split("$"); //was "#"
+    
     var linenum = parseInt(locationArray[locationArray.length - 2]);
+    console.log(d.data.name, linenum);
     return linenum;
+   
   }
 </script>
            
