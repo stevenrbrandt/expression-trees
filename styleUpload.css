@@ -1,6 +1,7 @@
 #tree-vis {
     overflow-y: scroll;
     overflow-x: scroll;
+    visibility: hidden;
 }
 p {
 font: 12px sans-serif;
@@ -101,6 +102,7 @@ border: 0px;
 border-radius: 8px;
 display: inline-block;
 white-space: nowrap;
+visibility: hidden;
 }
 #navigate {
 display: inline-block;
@@ -126,6 +128,7 @@ border-radius: 8px
     font-family: monospace;
     font-size: 12px;
     whitespace: pre;
+    visibility: hidden;
 }
 #code-view pre { 
     margin-bottom: -12px;
@@ -134,6 +137,7 @@ border-radius: 8px
 
 #legend {
 position: absolute;
+visibility: hidden;
 }
 
 .node-line-key {
