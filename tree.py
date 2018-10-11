@@ -43,7 +43,7 @@ def main():
     for filename in sys.argv[1:]:
         if (".csv" in filename):
 	    perfdata = filename
-  	    print perfdata
+  	    
         if(".txt" in filename):
   	    treeformat = filename
           
