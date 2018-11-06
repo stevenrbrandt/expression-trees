@@ -330,8 +330,10 @@ function woo(){console.log("HEYHO");}
 
             // console.log("Input value: ", document.querySelector("#selectedDate").value);
             //datadate = document.querySelector("#selectedDate").value;
-            //textfile = "data/"+datadate + "-tree.txt";
-            //csvfile = "data/"+datadate + "-performance.csv";
+            //datadate = '2018-11-06';
+            textfile = document.getElementById("py-tree").value; //"data/"+datadate + "-tree.txt";
+            console.log('d3.csvParse=',typeof d3.csvParse);
+            csvfile = d3.csvParse(document.getElementById("py-csv").value); //"data/"+datadate + "-performance.csv";
             //console.log(textfile, csvfile);
             if (treeExists) {
                 var codeview = document.getElementById("code-view");
@@ -342,10 +344,14 @@ function woo(){console.log("HEYHO");}
                 //treevis.empty();
             }
             //if (textfile && csvfile) {	
+            console.log('csv:',typeof csvfile);
+            analyze(false,textfile,csvfile);
+            /*
             d3.queue()
                   .defer(d3.text,"data/treeformat.txt")//textfile)
                   .defer(d3.csv, "data/performance.csv")//csvfile)
                   .await(analyze);
+                  */
                   $('#shapekey').css('visibility', 'visible');
                   $('#legend').css('visibility', 'visible');
                   //$('#code-view').css('visibility', 'visible');
@@ -360,6 +366,7 @@ function woo(){console.log("HEYHO");}
             if (error) alert("Data for " + datadate + " does not exist.");
             treeExists = true;
             // Assigns parent, children, height, depth
+            console.log("treeformat:",typeof treeformat);
             treeformat = parseNewick(treeformat);
             root = d3.hierarchy(treeformat, function(d){ return d.branchset;});
             fullRoot = d3.hierarchy(treeformat, function(d){ return d.branchset;});
@@ -1206,11 +1213,17 @@ function woo(){console.log("HEYHO");}
             });
             
         }
-        function makeCodeArray(physlfile) {
+        function makeCodeArray() {
             codeArray = [];
+            /*
             d3.text(physlfile, function(data){
                 codeArray = data.split('\n');
             });  
+            */
+            codeText = document.getElementById("py-src").value;
+            console.log(typeof codeText);
+            console.log(codeText);
+            codeArray = codeText.split('\n');
             
             return codeArray;
         }
@@ -1358,7 +1371,7 @@ function woo(){console.log("HEYHO");}
                     }
                 });
         //codeData = makeCodeArray("als2.physl");
-        codeArray = makeCodeArray("data/als_csv_instrumented.cpp");
+        codeArray = makeCodeArray();
         treeExists = false;
         HTMLElement.prototype.empty = function() {
             while (this.firstChild) {
